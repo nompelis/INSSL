@@ -620,6 +620,7 @@ void inOSSL_QueryVerifyResult( long result )
 //
 // Driver (becomes a server or a client)
 //
+#ifdef _INSSL_DRIVER_
 int main( int argc, char *argv[] )
 {
    int ierr;
@@ -804,4 +805,5 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
    return(ierr);
 }
 
+#endif
 

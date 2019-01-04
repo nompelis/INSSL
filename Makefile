@@ -5,8 +5,10 @@ DEBUG = -D  _DEBUG_OSSL_
 
 COPTS += $(DEBUG)
 
+all: net
+
 net:
-	$(CC) $(COPTS) netssl.c $(LIBS)
+	$(CC) $(COPTS) -D_INSSL_DRIVER_ netssl.c $(LIBS)
 
 web:
 	$(CC) $(COPTS) webssl.c $(LIBS)
