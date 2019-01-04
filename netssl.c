@@ -30,8 +30,6 @@
 #include <openssl/x509v3.h>
 
 
-#include "inSSL_RSAkeys.h"
-
 
 /*
  * The structure that holds all the information for a server/client using SSL
