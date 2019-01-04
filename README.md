@@ -107,13 +107,22 @@ The output for the key will only show the internal data, while the output for
 the certificate will contain the issuer and signing information. If you have
 got this far, the files "key.pem" and "cert.pem" are ready for use.
 
+Execute the server by simply executing the program:
 
+ ./a.out
 
+Execute the client by executing the program with arguments:
+
+ ./a.out localhost 60001
+
+The port number "60001" is hard-wired inside the code. You will see that the
+client will make three connections to the server, a message will be exchanged,
+and both server and client will terminate.
 
 - Studying
 
 You want to follow closely what the software does by keeping the high
-verbosity switches and add some of your own.
+verbosity switches and adding some output of your own.
 
 
 MOTIVATION
@@ -135,7 +144,7 @@ LICENSE
 You agree to all these terms and conditions:
 
 /******************************************************************************
- Copyright (c) 2019, Ioannis Nompelis
+ Copyright (c) 2018-2019, Ioannis Nompelis
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without any
