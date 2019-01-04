@@ -1,7 +1,7 @@
 # INSSL
 
 A straight-forward tutorial on using the Secure Socket Layer (SSL).
-An intuitive interface for using OpenSSL that does not make one nautious.
+An intuitive interface for using OpenSSL that does not make one nauseous.
 A program to make web queries over HTTPS using CA-verified certificates.
 A skeletal SSL server-client program over which one can build applications.
 
@@ -32,7 +32,7 @@ USING THIS CODE
 
 - Compiling
 
-Look in the Makefile. Go whatever it takes to compile it without warnings
+Look in the Makefile. Do whatever it takes to compile it without warnings
 so that you can be a happy user. On Linux, with the GNU compiler (gcc), and
 with the OpenSSL libraries that came with my Slackware distribution, as well
 as on a handful of SuSE installations and OpenBSD, this worked fine for me.
@@ -144,7 +144,9 @@ LICENSE
 You agree to all these terms and conditions:
 
 /******************************************************************************
+
  Copyright (c) 2018-2019, Ioannis Nompelis
+
  All rights reserved.
 
  Redistribution and use in source and binary forms, with or without any
@@ -173,6 +175,7 @@ You agree to all these terms and conditions:
  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
  ******************************************************************************/
 
 
