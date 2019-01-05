@@ -69,8 +69,8 @@ the client knows that it is... talking to the mothership, say.
 To create a certificate, we need a private key, which is to be safeguarded on
 the server side. We do this with a command like this:
 
-  openssl genpkey -algorithm RSA -out key.pem -outform PEM \
-                  -pkeyopt rsa_keygen_bits:2048
+     openssl genpkey -algorithm RSA -out key.pem -outform PEM \
+                     -pkeyopt rsa_keygen_bits:2048
 
 This command tells the OpenSSL framework front-end to create a private key
 that is written in the PEM format; there is a choice made for the number of
@@ -87,7 +87,7 @@ certificate for you. To do this, you provide the private key data and the
 data that you would like to have embedded in the certificate. The command is
 this:
 
- openssl req -new -key key.pem -out server.csr
+    openssl req -new -key key.pem -out server.csr
 
 This will create the "server.csr" file in the current working directory.
 
@@ -95,13 +95,13 @@ Use this certificate file and the private key to create a certificate. Because
 the key used for the digital signing is your own, this is "self-signing." The
 command is this:
 
- openssl x509 -req -in server.csr -signkey key.pem -out cert.pem
+    openssl x509 -req -in server.csr -signkey key.pem -out cert.pem
 
 By trying the following two commands you can see the contents of the key and
 the certificate, with all binary data printed in hex:
 
- openssl rsa -text -in key.pem
- openssl x509 -text -in cert.pem
+    openssl rsa -text -in key.pem
+    openssl x509 -text -in cert.pem
 
 The output for the key will only show the internal data, while the output for
 the certificate will contain the issuer and signing information. If you have
@@ -109,11 +109,11 @@ got this far, the files "key.pem" and "cert.pem" are ready for use.
 
 Execute the server by simply executing the program:
 
- ./a.out
+    ./a.out
 
 Execute the client by executing the program with arguments:
 
- ./a.out localhost 60001
+    ./a.out localhost 60001
 
 The port number "60001" is hard-wired inside the code. You will see that the
 client will make three connections to the server, a message will be exchanged,
