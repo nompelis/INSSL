@@ -175,7 +175,7 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded certificated file: \"%s\" \n",FUNC,certfile);
+      printf(" [%s]  Loaded certificate file: \"%s\" \n",FUNC,certfile);
 #endif
    }
 
@@ -236,7 +236,7 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded certificated chunk (size= %d)\n",FUNC,clen);
+      printf(" [%s]  Loaded certificate chunk (size= %d)\n",FUNC,clen);
 #endif
    }
 
