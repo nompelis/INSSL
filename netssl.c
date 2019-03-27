@@ -1,9 +1,9 @@
 /******************************************************************************
  Code to do SSL server/client stuff using OpenSSL
 
- Copyright 2018 by Ioannis Nompelis
+ Copyright 2018-2019 by Ioannis Nompelis
 
- Ioannis Nompelis <nompelis@nobelware.com> 2018/12/26
+ Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27
  ******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,21 +29,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
-
-
-/*
- * The structure that holds all the information for a server/client using SSL
- */
-
-struct inOSSL_data_s {
-   SSL_CTX *sslctx;
-   SSL_METHOD *method;
-   struct sockaddr_in addr;
-   int socket;
-   int port;
-   X509 *client_cert;
-};
-
+#include "inSSL.h"
 
 /*
  * Function to initialize the OpenSSL library
@@ -168,6 +154,9 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
    printf(" [%s]  Loading certificates \n",FUNC);
 #endif
 
+#ifdef _DEBUG_OSSL_
+   printf(" [%s]  Loading certificate: \"%s\" \n",FUNC,keyfile);
+#endif
    iret = SSL_CTX_use_certificate_file( ctx, certfile, SSL_FILETYPE_PEM );
    if( iret <= 0 ) {
       printf(" [%s]  Could not load certificate file: \'%s\" \n",FUNC,certfile);
@@ -179,6 +168,9 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
 #endif
    }
 
+#ifdef _DEBUG_OSSL_
+   printf(" [%s]  Loading key: \"%s\" \n",FUNC,keyfile);
+#endif
    iret = SSL_CTX_use_PrivateKey_file( ctx, keyfile, SSL_FILETYPE_PEM );
    if( iret <= 0 ) {
       printf(" [%s]  Could not load private key file: \'%s\" \n",FUNC,keyfile);
@@ -211,7 +203,7 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
  * embedded binary representations to the SSL context structure.
  * This function works the same way as the file-based one, but uses memory
  * segments such that certificates can be embedded to executable/library code.
- * One argument specifies the type of hte key.
+ * One argument specifies the type of the key.
  */
 
 int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
@@ -271,10 +263,11 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
  *
  * This function creates an SSL context by using select methods and loads the
  * certificates that it needs to allow for the clients to perform verification
- * of the server's identity.
+ * of the server's identity. It loads the certificate and its key from files.
  */
 
-int inOSSL_CreateServer( struct inOSSL_data_s *p, char *keyfile, char *certfile)
+int inOSSL_CreateServer( struct inOSSL_data_s *p,
+                         char *keyfile, char *certfile )
 {
    char FUNC[] = "inOSSL_CreateServer";
    int iret;
@@ -283,12 +276,15 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p, char *keyfile, char *certfile)
    printf(" [%s]  Creating SSL server \n",FUNC);
 #endif
 
-   p->method = SSLv2_server_method();
+// p->method = SSLv2_server_method();
+   p->method = SSLv3_server_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not create SSL server context \n",FUNC);
       ERR_print_errors_fp( stdout );
+#endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
@@ -300,7 +296,9 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 
    iret = inOSSL_LoadCertificates( p->sslctx, certfile, keyfile );
    if( iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  There was a problem with the SSL certificates\n",FUNC);
+#endif
       // clean context before returning
       SSL_CTX_free( p->sslctx );
       return(1);
@@ -353,8 +351,10 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
    p->addr.sin_addr.s_addr = INADDR_ANY;
    iret = bind( sd, (struct sockaddr *) &(p->addr), sizeof(p->addr) );
    if(iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not bind() the socket to port: %d \n",FUNC,iport);
       perror("bind to port");
+#endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
@@ -364,8 +364,10 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
 
    iret = listen( sd, 10 );    // set backlog to ten
    if( iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not listen() on socket \n",FUNC);
       perror("Cannot configure listening port");
+#endif
       // close socket
       close( sd );
       return(-2);
@@ -398,9 +400,13 @@ X509* inOSSL_GetCertificate( SSL *ssl )
    // get the certificate if it is available
    cert = SSL_get_peer_certificate( ssl );
    if( cert != NULL ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Retrieved server certificate\n",FUNC);
+#endif
    } else {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  No certificates\n", FUNC);
+#endif
       return( NULL );
    }
 
@@ -483,12 +489,15 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
    printf(" [%s]  Creating SSL client \n",FUNC);
 #endif
 
-   p->method = SSLv2_client_method();
+// p->method = SSLv2_client_method();
+   p->method = SSLv3_client_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not create SSL client context \n",FUNC);
       ERR_print_errors_fp( stdout );
+#endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
@@ -497,6 +506,8 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
    }
 
    SSL_CTX_set_options( p->sslctx, SSL_OP_NO_SSLv2 );
+
+   return 0;    // skip loading the known certificate
 
    // TEMPORARY load a certificate from a file with no error-trapping
    p->client_cert = NULL;
@@ -547,8 +558,10 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
 
    host = gethostbyname( hostname );
    if( host == NULL ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not get host structure \n",FUNC);
       perror(hostname);
+#endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
@@ -558,8 +571,10 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
 
    sd = socket(PF_INET, SOCK_STREAM, 0);
    if( sd == -1 ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not create INET socket \n",FUNC);
       perror("socket creation failed");
+#endif
    } else {
 #ifdef _DEBUG_OSSL_
       printf(" [%s]  Created INET socket \n",FUNC);
@@ -573,8 +588,10 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
 
    iret = connect( sd, (struct sockaddr *) &addr, sizeof(addr) );
    if( iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
       printf(" [%s]  Could not connect to server \n",FUNC);
       perror(hostname);
+#endif
       close( sd );
       return(-2);
    } else {
@@ -776,9 +793,15 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
          // wait for some time
          sleep(1);
          // send some crap
+#ifdef _DEBUG_OSSL_
+         printf(" [MAIN]  Writing data to server...\n");
+#endif
          SSL_write(ssl, mesg, strlen(mesg));
       }
 
+#ifdef _DEBUG_OSSL_
+      printf(" [MAIN]  Shutting down SSL \n");
+#endif
       inOSSL_ShutdownSSLSession( ssl );
       close( server );
    }

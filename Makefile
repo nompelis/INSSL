@@ -1,5 +1,5 @@
 CC = gcc
-COPTS = -Wall -fPIC -O0
+COPTS = -Wall -fPIC -O0 -D  _OUTPUT_OSSL_
 LIBS = -lm -lssl -lcrypto 
 DEBUG = -D  _DEBUG_OSSL_
 
