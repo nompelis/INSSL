@@ -507,10 +507,10 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 
    SSL_CTX_set_options( p->sslctx, SSL_OP_NO_SSLv2 );
 
+   p->client_cert = NULL;
    return 0;    // skip loading the known certificate
 
    // TEMPORARY load a certificate from a file with no error-trapping
-   p->client_cert = NULL;
    // this is temporary
    FILE *fp = fopen( certfile, "r" );
    p->client_cert = PEM_read_X509( fp, NULL, NULL, NULL);
