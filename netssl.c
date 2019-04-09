@@ -278,7 +278,10 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
 
 // p->method = SSLv2_server_method();
 // p->method = SSLv3_server_method();
-   p->method = TLSv1_server_method();
+// p->method = TLSv1_server_method();
+// p->method = TLSv1_1_server_method();
+   p->method = TLSv1_2_server_method();
+// p->method = TLSv1_3_server_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
@@ -492,7 +495,10 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 
 // p->method = SSLv2_client_method();
 // p->method = SSLv3_client_method();
-   p->method = TLSv1_client_method();
+// p->method = TLSv1_client_method();
+// p->method = TLSv1_1_client_method();
+   p->method = TLSv1_2_client_method();
+// p->method = TLSv1_3_client_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
