@@ -282,6 +282,7 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
 // p->method = TLSv1_1_server_method();
    p->method = TLSv1_2_server_method();
 // p->method = TLSv1_3_server_method();
+// p->method = DTLS_server_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
@@ -398,7 +399,9 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
 
 X509* inOSSL_GetCertificate( SSL *ssl )
 {
+#ifdef _OUTPUT_OSSL_
    char FUNC[] = "inOSSL_GetCertificate";
+#endif
    X509 *cert;
 
    // get the certificate if it is available
@@ -499,6 +502,7 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 // p->method = TLSv1_1_client_method();
    p->method = TLSv1_2_client_method();
 // p->method = TLSv1_3_client_method();
+// p->method = DTLS_client_method();
    p->sslctx = SSL_CTX_new( p->method );
 
    if( p->sslctx == NULL ) {
@@ -672,8 +676,8 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
    }
 
    while( iround < 3 ) {
-      struct sockaddr_in addr, peer_addr;
-      socklen_t len = sizeof(addr);
+      struct sockaddr_in peer_addr;
+      socklen_t len = sizeof(peer_addr);
       SSL *ssl = NULL;
       X509 *cert = NULL;
       int client;
@@ -684,7 +688,7 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
    printf(" [MAIN]  Waiting at accept() ... \n");
 #endif
       client = accept(server_data.socket, (struct sockaddr *) &peer_addr, &len);
-      printf("Connection: %s:%d\n",inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+      printf("Connection: %s:%d\n",inet_ntoa(peer_addr.sin_addr), ntohs(peer_addr.sin_port));
       ssl = SSL_new(server_data.sslctx);
       cert = inOSSL_GetCertificate( ssl );   // should show no certificates
       inOSSL_ShowCertificate( cert );        // should show no certificates
