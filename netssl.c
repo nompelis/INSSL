@@ -42,28 +42,28 @@ int inOSSL_InitializeSSL()
    char FUNC[] = "inOSSL_InitializeSSL";
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading all algorithms \n",FUNC);
+   fprintf( stdout, " [%s]  Loading all algorithms \n", FUNC );
 #endif
    OpenSSL_add_all_algorithms();
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading various SSL library strings \n",FUNC);
+   fprintf( stdout, " [%s]  Loading various SSL library strings \n", FUNC );
 #endif
    SSL_load_error_strings();
    ERR_load_BIO_strings();
    ERR_load_crypto_strings();
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Initializing the SSL library \n",FUNC);
+   fprintf( stdout, " [%s]  Initializing the SSL library \n", FUNC );
 #endif
    ierr = SSL_library_init();
    if( ierr < 0 ) {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Could not initialize the SSL library \n",FUNC);
+      fprintf( stdout, " [%s]  Could not initialize the SSL library \n", FUNC );
 #endif
-      return(1);
+      return 1;
    }
 
-   return(0);
+   return 0;
 }
 
 
@@ -95,12 +95,12 @@ void inOSSL_ShutdownSSLSession( SSL *p )
 
    if( p == NULL ) {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  The SSL session pointer is null!\n",FUNC);
+      fprintf( stdout, " [%s]  The SSL session pointer is null!\n", FUNC );
 #endif
       return;
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Shutting down the SSL session \n",FUNC);
+      fprintf( stdout, " [%s]  Shutting down the SSL session \n", FUNC );
 #endif
    }
 
@@ -109,16 +109,19 @@ void inOSSL_ShutdownSSLSession( SSL *p )
       ierr = SSL_shutdown( p );
       if( ierr == 0 ) {
 #ifdef _DEBUG_OSSL_
-         printf(" [%s]  Shutdown return %d; will call again \n",FUNC,ierr);
+         fprintf( stdout, " [%s]  Shutdown return %d; will call again \n",
+                  FUNC, ierr );
 #endif
       } else if( ierr == 1 ) {
 #ifdef _DEBUG_OSSL_
-         printf(" [%s]  Shutdown return %d; completed \n",FUNC,ierr);
+         fprintf( stdout, " [%s]  Shutdown return %d; completed \n",
+                  FUNC, ierr );
 #endif
          n = nmax;
       } else {
 #ifdef _DEBUG_OSSL_
-         printf(" [%s]  Shutdown return %d; failed\n",FUNC,ierr);
+         fprintf( stdout, " [%s]  Shutdown return %d; failed\n",
+                  FUNC, ierr );
 #endif
          n = nmax;
       }
@@ -126,7 +129,7 @@ void inOSSL_ShutdownSSLSession( SSL *p )
    }
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Freeing structure \n",FUNC);
+   fprintf( stdout, " [%s]  Freeing structure \n", FUNC );
 #endif
    SSL_free( p );
 
@@ -150,45 +153,49 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
    char FUNC[] = "inOSSL_LoadCertificates";
    int iret;
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading certificates \n",FUNC);
+   fprintf( stdout, " [%s]  Loading certificates \n", FUNC );
 #endif
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading certificate: \"%s\" \n",FUNC,keyfile);
+   fprintf( stdout, " [%s]  Loading certificate: \"%s\" \n", FUNC, keyfile );
 #endif
    iret = SSL_CTX_use_certificate_file( ctx, certfile, SSL_FILETYPE_PEM );
    if( iret <= 0 ) {
-      printf(" [%s]  Could not load certificate file: \'%s\" \n",FUNC,certfile);
+      fprintf( stdout, " [%s]  Could not load certificate file: \'%s\" \n",
+               FUNC, certfile );
       ERR_print_errors_fp( stdout );
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded certificate file: \"%s\" \n",FUNC,certfile);
+      fprintf( stdout, " [%s]  Loaded certificate file: \"%s\" \n",
+               FUNC, certfile );
 #endif
    }
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading key: \"%s\" \n",FUNC,keyfile);
+   fprintf( stdout, " [%s]  Loading key: \"%s\" \n", FUNC, keyfile );
 #endif
    iret = SSL_CTX_use_PrivateKey_file( ctx, keyfile, SSL_FILETYPE_PEM );
    if( iret <= 0 ) {
-      printf(" [%s]  Could not load private key file: \'%s\" \n",FUNC,keyfile);
+      fprintf( stdout, " [%s]  Could not load private key file: \'%s\" \n",
+               FUNC, keyfile );
       ERR_print_errors_fp( stdout );
       // unload certfile here?
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded private key from file: \"%s\" \n",FUNC,keyfile);
+      fprintf( stdout, " [%s]  Loaded private key from file: \"%s\" \n",
+               FUNC, keyfile );
 #endif
    }
 
    if( !SSL_CTX_check_private_key( ctx ) ) {
-      printf(" [%s]  Private key does not match the public certificate\n",FUNC);
+      fprintf( stdout, " [%s]  Private key does not match the public certificate\n",FUNC);
       // unload certfile/privkey here?
       return(1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Private key matches certificate \n",FUNC);
+      fprintf( stdout, " [%s]  Private key matches certificate \n", FUNC );
 #endif
    }
 
@@ -212,44 +219,48 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
    char FUNC[] = "inOSSL_LoadCertificatesMem";
    int iret;
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Loading certificates from memory segments\n",FUNC);
+   fprintf( stdout, " [%s]  Loading certificates from memory segments\n", FUNC);
 #endif
 
    if( certdata == NULL || keydata == NULL ) {
-      printf(" [%s]  Certificate data is null \n",FUNC);
+      fprintf( stdout, " [%s]  Certificate data is null \n", FUNC );
       return(2);
    }
 
    iret = SSL_CTX_use_certificate_ASN1( ctx, clen, certdata );
    if( iret <= 0 ) {
-      printf(" [%s]  Could not load certificate chunk (size= %d)\n",FUNC,clen);
+      fprintf( stdout, " [%s]  Could not load certificate chunk (size= %d)\n",
+               FUNC, clen );
       ERR_print_errors_fp( stdout );
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded certificate chunk (size= %d)\n",FUNC,clen);
+      fprintf( stdout, " [%s]  Loaded certificate chunk (size= %d)\n",
+               FUNC, clen );
 #endif
    }
 
    iret = SSL_CTX_use_PrivateKey_ASN1( ipk, ctx, keydata, klen );
    if( iret <= 0 ) {
-      printf(" [%s]  Could not load private key chunk (size=%d)\n",FUNC,klen);
+      fprintf( stdout, " [%s]  Could not load private key chunk (size=%d)\n",
+               FUNC, klen );
       ERR_print_errors_fp( stdout );
       // unload certfile here?
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded private key chunk (size=%d)\n",FUNC,klen);
+      fprintf( stdout, " [%s]  Loaded private key chunk (size=%d)\n",
+               FUNC, klen );
 #endif
    }
 
    if( !SSL_CTX_check_private_key( ctx ) ) {
-      printf(" [%s]  Private key does not match the public certificate\n",FUNC);
+      fprintf( stdout, " [%s]  Private key does not match the public certificate\n",FUNC);
       // unload certfile/privkey here?
       return(1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Private key matches certificate \n",FUNC);
+      fprintf( stdout, " [%s]  Private key matches certificate \n", FUNC );
 #endif
    }
 
@@ -272,7 +283,7 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
    int iret;
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Creating SSL server \n",FUNC);
+   fprintf( stdout, " [%s]  Creating SSL server \n", FUNC );
 #endif
 
 // p->method = SSLv2_server_method();
@@ -286,24 +297,24 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
 
    if( p->sslctx == NULL ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not create SSL server context \n",FUNC);
+      fprintf( stdout, " [%s]  Could not create SSL server context \n", FUNC );
       ERR_print_errors_fp( stdout );
 #endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Created SSL server context \n",FUNC);
+      fprintf( stdout, " [%s]  Created SSL server context \n", FUNC );
 #endif
    }
 
    if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not open CA file \n",FUNC);
+      fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
 #endif
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded trusted CA certificates \n",FUNC);
+      fprintf( stdout, " [%s]  Loaded trusted CA certificates \n", FUNC );
 #endif
    }
 
@@ -312,7 +323,8 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
    iret = inOSSL_LoadCertificates( p->sslctx, certfile, keyfile );
    if( iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  There was a problem with the SSL certificates\n",FUNC);
+      fprintf( stdout, " [%s]  There was a problem with the SSL certificates\n",
+                FUNC );
 #endif
       // clean context before returning
       SSL_CTX_free( p->sslctx );
@@ -355,7 +367,7 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
    int iret;
 
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Starting INET server \n",FUNC);
+   fprintf( stdout, " [%s]  Starting INET server \n", FUNC );
 #endif
 
    // create a listening a socket
@@ -367,20 +379,22 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
    iret = bind( sd, (struct sockaddr *) &(p->addr), sizeof(p->addr) );
    if(iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not bind() the socket to port: %d \n",FUNC,iport);
+      fprintf( stdout, " [%s]  Could not bind() the socket to port: %d \n",
+               FUNC, iport );
       perror("bind to port");
 #endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Successfully bind() socket to port: %d \n",FUNC,iport);
+      fprintf( stdout, " [%s]  Successfully bind() socket to port: %d \n",
+               FUNC, iport );
 #endif
    }
 
    iret = listen( sd, 10 );    // set backlog to ten
    if( iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not listen() on socket \n",FUNC);
+      fprintf( stdout, " [%s]  Could not listen() on socket \n", FUNC );
       perror("Cannot configure listening port");
 #endif
       // close socket
@@ -388,7 +402,7 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Successfully listen()ing on socket \n",FUNC);
+      fprintf( stdout, " [%s]  Successfully listen()ing on socket \n", FUNC );
 #endif
    }
 
@@ -418,11 +432,11 @@ X509* inOSSL_GetCertificate( SSL *ssl )
    cert = SSL_get_peer_certificate( ssl );
    if( cert != NULL ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Retrieved server certificate\n",FUNC);
+      fprintf( stdout, " [%s]  Retrieved server certificate\n", FUNC );
 #endif
    } else {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  No certificates\n", FUNC);
+      fprintf( stdout, " [%s]  No certificates\n",  FUNC );
 #endif
       return( NULL );
    }
@@ -449,16 +463,16 @@ void inOSSL_ShowCertificate( X509 *cert )
    char *serial_ascii;
 
    if( cert == NULL ) {
-      printf(" [%s]  Certificate pointer is null \n",FUNC);
+      fprintf( stdout, " [%s]  Certificate pointer is null \n", FUNC );
       return;
    }
 
-   printf(" [%s]  Server certificate:\n",FUNC);
+   fprintf( stdout, " [%s]  Server certificate:\n", FUNC );
    line = X509_NAME_oneline( X509_get_subject_name( cert ), 0, 0 );
-   printf(" [%s]  Subject: %s\n", FUNC, line);
+   fprintf( stdout, " [%s]  Subject: %s\n", FUNC, line );
    free(line);
    line = X509_NAME_oneline( X509_get_issuer_name( cert ), 0, 0 );
-   printf(" [%s]  Issuer: %s\n", FUNC, line);
+   fprintf( stdout, " [%s]  Issuer: %s\n", FUNC, line );
    free(line);
 
    // get the certificate's serial number and display it 
@@ -466,22 +480,23 @@ void inOSSL_ShowCertificate( X509 *cert )
    bn = ASN1_INTEGER_to_BN(serial, NULL); // makes new BN object
    serial_ascii = BN_bn2dec(bn);          // get pointer to new char object
    BN_free( bn );                         // drop the big-number object
-   printf(" [%s]  Certificate's serial num. \"%s\"\n",FUNC,serial_ascii);
+   fprintf( stdout, " [%s]  Certificate's serial num. \"%s\"\n",
+            FUNC, serial_ascii );
    free( serial_ascii );                  // drop the string
 
    // provide some info about the certificate
-   printf(" [%s]  ",FUNC);
+   fprintf( stdout, " [%s]  ", FUNC );
    raw = X509_check_ca( cert );
    if( raw <= 0 ) {
-      printf("Is an unknown certificate \n");
+      fprintf( stdout, "Is an unknown certificate \n" );
    } else if( raw == 1 ) {
-      printf("Is an X.509 v3 CA certificate with basicConstraints extension CA:TRUE \n");
+      fprintf( stdout, "Is an X.509 v3 CA certificate with basicConstraints extension CA:TRUE \n");
    } else if( raw == 3 ) {
-      printf("Is a self-signed X.509 v1 certificate \n");
+      fprintf( stdout, "Is a self-signed X.509 v1 certificate \n");
    } else if( raw == 4 ) {
-      printf("Is a certificate with keyUsage extension with bit keyCertSign set, but without basicConstraints \n");
+      fprintf( stdout, "Is a certificate with keyUsage extension with bit keyCertSign set, but without basicConstraints \n");
    } else if( raw == 5 ) {
-      printf("Is a certificate with an outdated Netscape Certificate Type extension telling that it is a CA certificate \n");
+      fprintf( stdout, "Is a certificate with an outdated Netscape Certificate Type extension telling that it is a CA certificate \n");
    }
 }
 
@@ -503,7 +518,7 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 {
    char FUNC[] = "inOSSL_CreateClient";
 #ifdef _DEBUG_OSSL_
-   printf(" [%s]  Creating SSL client \n",FUNC);
+   fprintf( stdout, " [%s]  Creating SSL client \n", FUNC );
 #endif
 
 // p->method = SSLv2_client_method();
@@ -517,24 +532,24 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 
    if( p->sslctx == NULL ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not create SSL client context \n",FUNC);
+      fprintf( stdout, " [%s]  Could not create SSL client context \n", FUNC );
       ERR_print_errors_fp( stdout );
 #endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Created SSL client context \n",FUNC);
+      fprintf( stdout, " [%s]  Created SSL client context \n", FUNC );
 #endif
    }
 
    if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not open CA file \n",FUNC);
+      fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
 #endif
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Loaded trusted CA certificates \n",FUNC);
+      fprintf( stdout, " [%s]  Loaded trusted CA certificates \n", FUNC );
 #endif
    }
 
@@ -592,25 +607,25 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
    host = gethostbyname( hostname );
    if( host == NULL ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not get host structure \n",FUNC);
+      fprintf( stdout, " [%s]  Could not get host structure \n", FUNC );
       perror(hostname);
 #endif
       return(-1);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Prepared hostname structure \n",FUNC);
+      fprintf( stdout, " [%s]  Prepared hostname structure \n", FUNC );
 #endif
    }
 
    sd = socket(PF_INET, SOCK_STREAM, 0);
    if( sd == -1 ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not create INET socket \n",FUNC);
+      fprintf( stdout, " [%s]  Could not create INET socket \n", FUNC );
       perror("socket creation failed");
 #endif
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Created INET socket \n",FUNC);
+      fprintf( stdout, " [%s]  Created INET socket \n", FUNC );
 #endif
    }
 
@@ -622,14 +637,14 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
    iret = connect( sd, (struct sockaddr *) &addr, sizeof(addr) );
    if( iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
-      printf(" [%s]  Could not connect to server \n",FUNC);
+      fprintf( stdout, " [%s]  Could not connect to server \n", FUNC );
       perror(hostname);
 #endif
       close( sd );
       return(-2);
    } else {
 #ifdef _DEBUG_OSSL_
-      printf(" [%s]  Connected to server \n",FUNC);
+      fprintf( stdout, " [%s]  Connected to server \n", FUNC );
 #endif
    }
 
@@ -642,27 +657,27 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
  */
 void inOSSL_QueryVerifyResult( long result )
 {
-   printf(" Verification result is: ");
+   fprintf( stdout, " Verification result is: " );
 
    if(        result == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT ) {
-                printf("X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT \n" );
    } else if( result == X509_V_ERR_UNABLE_TO_GET_CRL ) {
-                printf("X509_V_ERR_UNABLE_TO_GET_CRL \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_GET_CRL \n" );
    } else if( result == X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE ) {
-                printf("X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE \n" );
    } else if( result == X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE) {
-                printf("X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE \n" );
    } else if( result == X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY ) {
-                printf("X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY \n" );
    } else if( result == X509_V_ERR_CERT_SIGNATURE_FAILURE) {
-                printf("X509_V_ERR_CERT_SIGNATURE_FAILURE \n");
+      fprintf( stdout, "X509_V_ERR_CERT_SIGNATURE_FAILURE \n" );
    } else if( result == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY ) {
-                printf("X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY \n");
+      fprintf( stdout, "X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY \n" );
    } else {
-      printf("UNKNOWN: %ld  \n",result);
+      fprintf( stdout, "UNKNOWN: %ld  \n", result );
    }
 
-   printf("\n");
+   fprintf( stdout, "\n" );
 }
 
 
