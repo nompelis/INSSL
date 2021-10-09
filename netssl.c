@@ -527,6 +527,17 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 #endif
    }
 
+   if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
+#ifdef _OUTPUT_OSSL_
+      printf(" [%s]  Could not open CA file \n",FUNC);
+#endif
+      return(-2);
+   } else {
+#ifdef _DEBUG_OSSL_
+      printf(" [%s]  Loaded trusted CA certificates \n",FUNC);
+#endif
+   }
+
    SSL_CTX_set_options( p->sslctx, SSL_OP_NO_SSLv2 );
 
    p->client_cert = NULL;
