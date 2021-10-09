@@ -1,7 +1,7 @@
 /******************************************************************************
  Code to do SSL server/client stuff using OpenSSL
 
- Copyright 2018-2019 by Ioannis Nompelis
+ Copyright 2018-2021 by Ioannis Nompelis
 
  Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27
  ******************************************************************************/
@@ -45,6 +45,7 @@ struct inOSSL_data_s {
    int socket;
    int port;
    X509 *client_cert;
+   char *ca_cert, *ca_path;
 };
 
 

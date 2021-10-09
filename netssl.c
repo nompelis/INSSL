@@ -1,7 +1,7 @@
 /******************************************************************************
  Code to do SSL server/client stuff using OpenSSL
 
- Copyright 2018-2019 by Ioannis Nompelis
+ Copyright 2018-2021 by Ioannis Nompelis
 
  Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27
  ******************************************************************************/
@@ -40,7 +40,6 @@ int inOSSL_InitializeSSL()
 {
    int ierr;
    char FUNC[] = "inOSSL_InitializeSSL";
-
 
 #ifdef _DEBUG_OSSL_
    printf(" [%s]  Loading all algorithms \n",FUNC);
@@ -294,6 +293,17 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
    } else {
 #ifdef _DEBUG_OSSL_
       printf(" [%s]  Created SSL server context \n",FUNC);
+#endif
+   }
+
+   if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
+#ifdef _OUTPUT_OSSL_
+      printf(" [%s]  Could not open CA file \n",FUNC);
+#endif
+      return(-2);
+   } else {
+#ifdef _DEBUG_OSSL_
+      printf(" [%s]  Loaded trusted CA certificates \n",FUNC);
 #endif
    }
 
@@ -665,6 +675,10 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
    printf(" [MAIN]  IN's SSL server (built: %s %s)\n",__DATE__,__TIME__);
 #endif
 
+   // should get paths from either env variables or passed in
+   server_data.ca_cert = NULL;
+   server_data.ca_path = NULL;
+
    ierr = inOSSL_InitializeSSL();
    ierr = inOSSL_CreateServer( &server_data, "key.pem", "cert.pem" );
    server_data.socket = inOSSL_StartServer( &server_data, iport );
@@ -746,6 +760,10 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
 #ifdef _DEBUG_OSSL_
    printf(" [MAIN]  IN's SSL client (built: %s %s)\n",__DATE__,__TIME__);
 #endif
+
+   // should get paths from either env variables or passed in
+   client_data.ca_cert = NULL;
+   client_data.ca_path = NULL;
 
    ierr = inOSSL_InitializeSSL();
    ierr = inOSSL_CreateClient( &client_data, "key.pem", "cert.pem" );
