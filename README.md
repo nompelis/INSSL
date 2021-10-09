@@ -37,6 +37,14 @@ so that you can be a happy user. On Linux, with the GNU compiler (gcc), and
 with the OpenSSL libraries that came with my Slackware distribution, as well
 as on a handful of SuSE installations and OpenBSD, this worked fine for me.
 
+You will find that if your system's OS is old or shipped with an older version
+of OpenSSL, and therefore it has deprecated symbols (functions/constants),
+you will have compiler errors and caution warnings -- rightfully so. In the
+Makefile there is a variable that allows one to set a shell variable for where
+their prefered OpenSSL version is installed, and it can be used. Remove this
+if your system's OpenSSL version is a good one and you do not want to have
+to set that variable, etc.
+
 - Running
 
 There are two modes of execution at present: a client and a server mode.
@@ -145,7 +153,7 @@ You agree to all these terms and conditions:
 
 /******************************************************************************
 
- Copyright (c) 2018-2019, Ioannis Nompelis
+ Copyright (c) 2018-2021, Ioannis Nompelis
 
  All rights reserved.
 
@@ -179,5 +187,5 @@ You agree to all these terms and conditions:
  ******************************************************************************/
 
 
-IN 2019/12/03
+IN 2021/10/09
 

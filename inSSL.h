@@ -40,7 +40,7 @@
 
 struct inOSSL_data_s {
    SSL_CTX *sslctx;
-   SSL_METHOD *method;
+   const SSL_METHOD *method;
    struct sockaddr_in addr;
    int socket;
    int port;
