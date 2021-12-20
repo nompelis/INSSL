@@ -3,7 +3,7 @@
 
  Copyright 2018-2021 by Ioannis Nompelis
 
- Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27
+ Ioannis Nompelis <nompelis@nobelware.com> 2019/01/21
  ******************************************************************************/
 
 #ifndef _INSSL_H_
@@ -40,8 +40,10 @@
 
 struct inOSSL_data_s {
    SSL_CTX *sslctx;
+   SSL *ssl;
    const SSL_METHOD *method;
    struct sockaddr_in addr;
+   struct hostent *host;
    int socket;
    int port;
    X509 *client_cert;
@@ -63,18 +65,18 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile );
 
 int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
                                 unsigned char *certdata, int clen,
-                                unsigned char *keydata, int klen, int npk );
+                                unsigned char *keydata, int klen );
 
-int inOSSL_CreateServer( struct inOSSL_data_s *p,
-                         char *keyfile, char *certfile );
+int inOSSL_CreateServerFromFiles( struct inOSSL_data_s *p,
+                                  char *keyfile, char *certfile );
 
-int inOSSL_CreateServerMemory( struct inOSSL_data_s *p,
-                               unsigned char *keydata, int klen,
-                               unsigned char *certdata, int clen );
+int inOSSL_CreateServerFromMemory( struct inOSSL_data_s *p,
+                                   unsigned char *keydata, int klen,
+                                   unsigned char *certdata, int clen );
 
 int inOSSL_TerminateServer( struct inOSSL_data_s *p );
 
-int inOSSL_StartServer( struct inOSSL_data_s *p, int iport );
+int inOSSL_StartServer( struct inOSSL_data_s *p, int iport, int num_backlog );
 
 X509* inOSSL_GetCertificate( SSL *ssl );
 
@@ -85,7 +87,14 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p,
 
 int inOSSL_TerminateClient( struct inOSSL_data_s *p );
 
-int inOSSL_ConnectToServer( const char *hostname, int iport );
+int inOSSL_ConnectToServer( const char *hostname, int iport, int flag );
+
+int inOSSL_ConnectToServerSSL(
+            int *socket,
+            const SSL_METHOD **method_,
+            SSL_CTX **sslctx_,
+            SSL **ssl_,
+            const char *hostname, int iport, int flag );
 
 void inOSSL_QueryVerifyResult( long result );
 

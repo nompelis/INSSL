@@ -3,7 +3,7 @@
 
  Copyright 2018-2021 by Ioannis Nompelis
 
- Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27
+ Ioannis Nompelis <nompelis@nobelware.com> 2019/03/27 - 2021/12/20
  ******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,22 +14,8 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <resolv.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/x509_vfy.h>
-#include <openssl/x509v3.h>
-
 #include "inSSL.h"
+
 
 /*
  * Function to initialize the OpenSSL library
@@ -190,7 +176,7 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
    }
 
    if( !SSL_CTX_check_private_key( ctx ) ) {
-      fprintf( stdout, " [%s]  Private key does not match the public certificate\n",FUNC);
+      fprintf( stdout, " [%s]  Private key does not match the public certificate\n", FUNC );
       // unload certfile/privkey here?
       return(1);
    } else {
@@ -203,7 +189,6 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
 }
 
 
-
 /*
  * Function to load the private key and the corresponding certificate from
  * embedded binary representations to the SSL context structure.
@@ -214,12 +199,12 @@ int inOSSL_LoadCertificates( SSL_CTX *ctx, char *certfile, char *keyfile )
 
 int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
                                 unsigned char *certdata, int clen,
-                                unsigned char *keydata, int klen, int ipk )
+                                unsigned char *keydata, int klen )
 {
    char FUNC[] = "inOSSL_LoadCertificatesMem";
    int iret;
 #ifdef _DEBUG_OSSL_
-   fprintf( stdout, " [%s]  Loading certificates from memory segments\n", FUNC);
+   fprintf( stdout, " [%s]  Loading certificates from memory segments\n",FUNC);
 #endif
 
    if( certdata == NULL || keydata == NULL ) {
@@ -240,7 +225,7 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
 #endif
    }
 
-   iret = SSL_CTX_use_PrivateKey_ASN1( ipk, ctx, keydata, klen );
+   iret = SSL_CTX_use_RSAPrivateKey_ASN1( ctx, keydata, klen );
    if( iret <= 0 ) {
       fprintf( stdout, " [%s]  Could not load private key chunk (size=%d)\n",
                FUNC, klen );
@@ -255,7 +240,7 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
    }
 
    if( !SSL_CTX_check_private_key( ctx ) ) {
-      fprintf( stdout, " [%s]  Private key does not match the public certificate\n",FUNC);
+      fprintf( stdout, " [%s]  Private key does not match the public certificate\n", FUNC );
       // unload certfile/privkey here?
       return(1);
    } else {
@@ -276,10 +261,10 @@ int inOSSL_LoadCertificatesMem( SSL_CTX *ctx,
  * of the server's identity. It loads the certificate and its key from files.
  */
 
-int inOSSL_CreateServer( struct inOSSL_data_s *p,
-                         char *keyfile, char *certfile )
+int inOSSL_CreateServerFromFiles( struct inOSSL_data_s *p,
+                                  char *keyfile, char *certfile )
 {
-   char FUNC[] = "inOSSL_CreateServer";
+   char FUNC[] = "inOSSL_CreateServerFromFiles";
    int iret;
 
 #ifdef _DEBUG_OSSL_
@@ -291,7 +276,6 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
 // p->method = TLSv1_server_method();
 // p->method = TLSv1_1_server_method();
 // p->method = TLSv1_2_server_method();
-// p->method = TLSv1_3_server_method();
    p->method = DTLS_server_method();
    p->sslctx = SSL_CTX_new( p->method );
 
@@ -323,8 +307,74 @@ int inOSSL_CreateServer( struct inOSSL_data_s *p,
    iret = inOSSL_LoadCertificates( p->sslctx, certfile, keyfile );
    if( iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
-      fprintf( stdout, " [%s]  There was a problem with the SSL certificates\n",
-                FUNC );
+      fprintf( stdout, " [%s]  There was a problem with the SSL certificates\n", FUNC );
+#endif
+      // clean context before returning
+      SSL_CTX_free( p->sslctx );
+      return(1);
+   }
+
+   return 0;
+}
+
+
+/*
+ * Function to create an SSL "server"
+ *
+ * This function creates an SSL context by using select methods and loads the
+ * certificates that it needs to allow for the clients to perform verification
+ * of the server's identity. It loads the certificate and its key from memory.
+ */
+
+int inOSSL_CreateServerFromMemory( struct inOSSL_data_s *p,
+                                   unsigned char *keydata, int klen,
+                                   unsigned char *certdata, int clen )
+{
+   char FUNC[] = "inOSSL_CreateServerFromMemory";
+   int iret;
+
+#ifdef _DEBUG_OSSL_
+   fprintf( stdout, " [%s]  Creating SSL server \n", FUNC );
+#endif
+
+// p->method = SSLv2_server_method();
+// p->method = SSLv3_server_method();
+// p->method = SSLv23_server_method();
+// p->method = TLSv1_server_method();
+// p->method = TLSv1_1_server_method();
+// p->method = TLSv1_2_server_method();
+   p->method = DTLS_server_method();
+   p->sslctx = SSL_CTX_new( p->method );
+
+   if( p->sslctx == NULL ) {
+#ifdef _OUTPUT_OSSL_
+      fprintf( stdout, " [%s]  Could not create SSL server context \n", FUNC );
+      ERR_print_errors_fp( stdout );
+#endif
+      return(-1);
+   } else {
+#ifdef _DEBUG_OSSL_
+      fprintf( stdout, " [%s]  Created SSL server context \n", FUNC );
+#endif
+   }
+
+   if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
+#ifdef _OUTPUT_OSSL_
+      fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
+#endif
+      return(-2);
+   } else {
+#ifdef _DEBUG_OSSL_
+      fprintf( stdout, " [%s]  Loaded trusted CA certificates \n", FUNC );
+#endif
+   }
+
+   SSL_CTX_set_options( p->sslctx, SSL_OP_NO_SSLv2 );
+
+   iret = inOSSL_LoadCertificatesMem( p->sslctx, certdata, clen, keydata, klen);
+   if( iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
+      fprintf( stdout, " [%s]  There was a problem with the SSL certificates\n", FUNC );
 #endif
       // clean context before returning
       SSL_CTX_free( p->sslctx );
@@ -360,7 +410,7 @@ int inOSSL_TerminateServer( struct inOSSL_data_s *p )
  * socket binding/llstening function here.
  */
 
-int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
+int inOSSL_StartServer( struct inOSSL_data_s *p, int iport, int num_backlog )
 {
    char FUNC[] = "inOSSL_StartServer";
    int sd;
@@ -391,7 +441,7 @@ int inOSSL_StartServer( struct inOSSL_data_s *p, int iport )
 #endif
    }
 
-   iret = listen( sd, 10 );    // set backlog to ten
+   iret = listen( sd, num_backlog );
    if( iret != 0 ) {
 #ifdef _OUTPUT_OSSL_
       fprintf( stdout, " [%s]  Could not listen() on socket \n", FUNC );
@@ -468,12 +518,12 @@ void inOSSL_ShowCertificate( X509 *cert )
    }
 
    fprintf( stdout, " [%s]  Server certificate:\n", FUNC );
-   line = X509_NAME_oneline( X509_get_subject_name( cert ), 0, 0 );
+   line = X509_NAME_oneline( X509_get_subject_name( cert ), NULL, 0 );
    fprintf( stdout, " [%s]  Subject: %s\n", FUNC, line );
-   free(line);
-   line = X509_NAME_oneline( X509_get_issuer_name( cert ), 0, 0 );
+   free( line );
+   line = X509_NAME_oneline( X509_get_issuer_name( cert ), NULL, 0 );
    fprintf( stdout, " [%s]  Issuer: %s\n", FUNC, line );
-   free(line);
+   free( line );
 
    // get the certificate's serial number and display it 
    serial = X509_get_serialNumber(cert);  // get internal pointer; don't free
@@ -487,16 +537,27 @@ void inOSSL_ShowCertificate( X509 *cert )
    // provide some info about the certificate
    fprintf( stdout, " [%s]  ", FUNC );
    raw = X509_check_ca( cert );
-   if( raw <= 0 ) {
-      fprintf( stdout, "Is an unknown certificate \n" );
+/// Here is the manual page on what to expect:
+///    Function return 0, if it is not CA certificate, 1 if it is proper
+///    X509v3 CA certificate with basicConstraints extension CA:TRUE, 3, if it
+///    is self-signed X509 v1 certificate, 4, if it is certificate with
+///    keyUsage extension with bit keyCertSign set, but without
+///    basicConstraints, and 5 if it has outdated Netscape Certificate Type
+///    extension telling that it is CA certificate.
+///    Actually, any non-zero value means that this certificate could have
+///    been used to sign other certificates.
+   if( raw == 0 ) {
+      fprintf( stdout, "   This is not a CA certificate \n");
    } else if( raw == 1 ) {
-      fprintf( stdout, "Is an X.509 v3 CA certificate with basicConstraints extension CA:TRUE \n");
+      fprintf( stdout, "   This is an X.509 v3 CA certificate with basicConstraints extension CA:TRUE \n");
    } else if( raw == 3 ) {
-      fprintf( stdout, "Is a self-signed X.509 v1 certificate \n");
+      fprintf( stdout, "   This is a self-signed X.509 v1 certificate \n");
    } else if( raw == 4 ) {
-      fprintf( stdout, "Is a certificate with keyUsage extension with bit keyCertSign set, but without basicConstraints \n");
+      fprintf( stdout, "   This is a certificate with keyUsage extension with bit keyCertSign set, but without basicConstraints \n");
    } else if( raw == 5 ) {
-      fprintf( stdout, "Is a certificate with an outdated Netscape Certificate Type extension telling that it is a CA certificate \n");
+      fprintf( stdout, "   This is a certificate with an outdated Netscape Certificate Type extension telling that it is a CA certificate \n");
+   } else {
+      fprintf( stdout, "   (Negative value) This is just unknown \n");
    }
 }
 
@@ -523,6 +584,7 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 
 // p->method = SSLv2_client_method();
 // p->method = SSLv3_client_method();
+// p->method = SSLv23_client_method();
 // p->method = TLSv1_client_method();
 // p->method = TLSv1_1_client_method();
 // p->method = TLSv1_2_client_method();
@@ -542,14 +604,20 @@ int inOSSL_CreateClient( struct inOSSL_data_s *p, char *keyfile, char *certfile)
 #endif
    }
 
-   if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
+   if( p->ca_cert != NULL ) {
+      if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
 #ifdef _OUTPUT_OSSL_
-      fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
+         fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
 #endif
-      return(-2);
+         return(-2);
+      } else {
+#ifdef _DEBUG_OSSL_
+         fprintf( stdout, " [%s]  Loaded trusted CA certificates \n", FUNC );
+#endif
+      }
    } else {
 #ifdef _DEBUG_OSSL_
-      fprintf( stdout, " [%s]  Loaded trusted CA certificates \n", FUNC );
+      fprintf( stdout, " [%s]  Not loading trusted CA certificates \n", FUNC );
 #endif
    }
 
@@ -595,7 +663,7 @@ int inOSSL_TerminateClient( struct inOSSL_data_s *p )
  * (This function is what a client executes to connect to a server)
  */
 
-int inOSSL_ConnectToServer( const char *hostname, int iport )
+int inOSSL_ConnectToServer( const char *hostname, int iport, int flag )
 {
    char FUNC[] = "inOSSL_ConnectToServer";
    int sd;
@@ -617,7 +685,11 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
 #endif
    }
 
-   sd = socket(PF_INET, SOCK_STREAM, 0);
+   if( flag ) { 
+      sd = socket( PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0 );
+   } else {
+      sd = socket( PF_INET, SOCK_STREAM, 0 );    // blocking socket
+   }
    if( sd == -1 ) {
 #ifdef _OUTPUT_OSSL_
       fprintf( stdout, " [%s]  Could not create INET socket \n", FUNC );
@@ -635,20 +707,267 @@ int inOSSL_ConnectToServer( const char *hostname, int iport )
    addr.sin_addr.s_addr = *(long*)(host->h_addr);
 
    iret = connect( sd, (struct sockaddr *) &addr, sizeof(addr) );
-   if( iret != 0 ) {
+   if( flag ) {    // for non-blocking sockets
+      // Need to check whether the connected socket is _writeable_, as we are
+      // assuming that we intend to write to the socket; checking whether the
+      // socket is readable makes no sense, because we cannot expect that the
+      // other side is necessarily going to write data to us upon connecting.
+
+      fd_set fds;
+      struct timeval tv;
+
+      FD_ZERO( &fds );
+      FD_SET( sd, &fds );
+      tv.tv_sec = 10;     // wait up to 10 seconds for connection
+      tv.tv_usec = 0;
+
+      if( iret != 0 ) {
+         if( errno == EINPROGRESS ) {
 #ifdef _OUTPUT_OSSL_
-      fprintf( stdout, " [%s]  Could not connect to server \n", FUNC );
-      perror(hostname);
+            fprintf( stdout, " [%s]  Socket \"in progress\" \n", FUNC );
+            perror(hostname);
 #endif
-      close( sd );
-      return(-2);
-   } else {
+            // check for writeability
+            iret = select( sd+1, NULL, &fds, NULL, &tv );
+            if( iret < 0 ) {
+#ifdef _OUTPUT_OSSL_
+               fprintf( stdout, " [%s]  Could not connect to server \n", FUNC );
+               perror(hostname);
+#endif
+               return -2;
+            } else if( iret == 0 ) {
+#ifdef _OUTPUT_OSSL_
+               fprintf( stdout, " [%s]  Timetout connect to server \n", FUNC );
+               perror(hostname);
+#endif
+               return -2;
+            } else {
 #ifdef _DEBUG_OSSL_
-      fprintf( stdout, " [%s]  Connected to server \n", FUNC );
+               fprintf( stdout, " [%s]  Connected (NonBlk) to server \n", FUNC);
 #endif
+            }
+         } else {
+#ifdef _OUTPUT_OSSL_
+            fprintf( stdout, " [%s]  Unknown socket error \n", FUNC );
+            perror(hostname);
+#endif
+         }
+      } else {
+         // this should NEVER happen
+#ifdef _OUTPUT_OSSL_
+         fprintf( stdout, " [%s]  Connection established (no drama?)\n", FUNC );
+         fprintf( stdout, "  **** Something is rong here... **** \n" );
+         fprintf( stdout, "  Call to connect() should return error first, \n" );
+         fprintf( stdout, "  and we should check descriptor for progress. \n" );
+#endif
+      }
+   } else {   // for blocking sockets
+      if( iret != 0 ) {
+#ifdef _OUTPUT_OSSL_
+         fprintf( stdout, " [%s]  Could not connect to server \n", FUNC );
+         perror(hostname);
+#endif
+         close( sd );
+         return -2;
+      } else {
+#ifdef _DEBUG_OSSL_
+         fprintf( stdout, " [%s]  Connected to server \n", FUNC );
+#endif
+      }
    }
 
    return( sd );
+}
+
+
+//
+// Function that connects to a server via SSL
+// (This function tries to create a context and ssl connection that works
+// by trying a number of different negotiation methods.)
+//
+
+int inOSSL_ConnectToServerSSL(
+            int *socket,
+            const SSL_METHOD **method_,
+            SSL_CTX **sslctx_,
+            SSL **ssl_,
+            const char *hostname, int iport, int flag )
+{
+   char FUNC[] = "inOSSL_ConnectToServerSSL";
+   const SSL_METHOD *method;
+   SSL_CTX *sslctx=NULL;
+   SSL *ssl=NULL;
+   int sd;
+   struct hostent *host;
+   struct sockaddr_in addr;
+   int n=0, nt=2, iret, iverb=0, idbg=0;
+
+#ifdef _OUTPUT_OSSL_
+   iverb=1;
+#endif
+#ifdef _DEBUG_OSSL_
+   idbg=1;
+#endif
+
+n=1; /// SKIP THE BULLSHIT
+   while( n < nt ) {    // sweep over SSL methods to try
+      if( iverb )
+        fprintf( stdout, " [%s]  SSL method trial: %d \n", FUNC, n );
+
+      if( flag ) {
+         sd = inOSSL_ConnectToServer( hostname, iport, 1 ); // non-block. socket
+      } else {
+         sd = inOSSL_ConnectToServer( hostname, iport, 0 );
+      }
+      if( sd < 0 ) {
+         if( iverb )
+            fprintf( stdout, " [%s]  Could not connect to server (TCP)\n",FUNC);
+         return 1;
+      } else {
+         if( iverb )
+            fprintf( stdout, " [%s]  Socket to server: %d \n", FUNC, sd );
+      }
+
+      // the following will be replaced with a swwp over an array of pointers
+      if( n == 0 ) method = DTLS_client_method();
+      if( n == 1 ) method = SSLv23_client_method();
+  //  if( n == 2 ) method = TLSv1_client_method();
+  //  if( n == 3 ) method = TLSv1_1_client_method();
+  //  if( n == 4 ) method = TLSv1_2_client_method();
+  //  if( n == 5 ) method = TLSv1_3_client_method();
+  //  if( n == 6 ) method = SSLv2_client_method();
+  //  if( n == 7 ) method = SSLv3_client_method();
+
+      sslctx = SSL_CTX_new( method );
+      if( sslctx == NULL ) {
+         if( iverb ) {
+            fprintf( stdout, " [%s]  Could create SSL Context \n",FUNC);
+            ERR_print_errors_fp( stdout );
+         }
+         if( idbg ) fprintf( stdout, "       Shutding down socket \n" );
+         shutdown( sd, SHUT_RDWR );
+         if( idbg ) fprintf( stdout, "       Closing socket \n" );
+         close( sd );
+         return 2;
+      } else {
+         if( iverb )
+            fprintf( stdout, "       Pointer to CTX %p \n", sslctx );
+      }
+
+      ssl = SSL_new( sslctx );
+      if( ssl == NULL ) {
+         if( iverb )
+            fprintf( stdout, " [%s]  Could create SSL session object \n",FUNC);
+         if( idbg ) fprintf( stdout, "   Freeing SSL CTX \n" );
+         SSL_CTX_free( sslctx );
+         if( idbg ) fprintf( stdout, "   Shutding down socket \n" );
+         shutdown( sd, SHUT_RDWR );
+         if( idbg ) fprintf( stdout, "   Closing socket \n" );
+         close( sd );
+         return 3;
+      } else {
+         if( iverb )
+            fprintf( stdout, "       Pointer to session obj. %p \n", ssl );
+      }
+
+      SSL_set_fd( ssl, sd );
+
+      // act differently based on blocking or non-blocking socket
+      if( flag ) {
+         int iend=1;
+         while( iend ) {
+            iret = SSL_connect( ssl );
+            if ( iret < 0 ) {
+               if( iverb )
+                  fprintf( stdout, " [%s]  Stage in conection: %d\n",FUNC,iret);
+               if( iverb ) usleep( 100000 );
+
+               int ssl_error = SSL_get_error( ssl, iret );
+               if( ssl_error == SSL_ERROR_WANT_WRITE ) {
+                  if( iverb )
+                     fprintf( stdout, "  Got ssl_error: \"want write\" \n" );
+               } else
+               if( ssl_error == SSL_ERROR_WANT_READ ) {
+                  if( iverb )
+                     fprintf( stdout, "  Got ssl_error: \"want read\" \n" );
+               } else {
+                  if( iverb )
+                     fprintf( stdout, "  Got ssl_error NEITHER!!! (Fatal) \n" );
+                  iend = 0;
+                  if( idbg ) fprintf( stdout, "   Freeing SSL sess. object \n");
+                  SSL_free( ssl );
+                  if( idbg ) fprintf( stdout, "   Freeing SSL CTX \n" );
+                  SSL_CTX_free( sslctx );
+                  if( idbg ) fprintf( stdout, "   Shutding down socket \n" );
+                  shutdown( sd, SHUT_RDWR );
+                  if( idbg ) fprintf( stdout, "   Closing socket \n" );
+                  close( sd );
+               }
+
+            } else if ( iret == 2 ) {
+               if( iverb )
+                  fprintf( stdout, " [%s]  Could not enable SSL/TLS, but shutdown was good \n",FUNC);
+               if( idbg ) fprintf( stdout, "   Freeing SSL session object \n" );
+               SSL_free( ssl );
+               if( idbg ) fprintf( stdout, "   Freeing SSL CTX \n" );
+               SSL_CTX_free( sslctx );
+            } else {  // iret == 1
+               if( iverb )
+                  fprintf( stdout, " [%s]  Successfully enabled SSL \n", FUNC );
+               n = 999;    // for exiting the loop
+               iend = 0;   // exit the ssl_connect calls
+            }
+         }
+      } else {
+         iret = SSL_connect( ssl );
+         if ( iret < 0 ) {
+            if( iverb )
+               fprintf( stdout, " [%s]  Could not start session \n",FUNC );
+            if( idbg ) fprintf( stdout, "   Freeing SSL session object \n" );
+            SSL_free( ssl );
+            if( idbg ) fprintf( stdout, "   Freeing SSL CTX \n" );
+            SSL_CTX_free( sslctx );
+            if( idbg ) fprintf( stdout, "   Shutding down socket \n" );
+            shutdown( sd, SHUT_RDWR );
+            if( idbg ) fprintf( stdout, "   Closing socket \n" );
+            close( sd );
+         } else if ( iret == 2 ) {
+            if( iverb )
+               fprintf( stdout, " [%s]  Could not enable SSL/TLS, but shutdown was good \n",FUNC);
+            if( idbg ) fprintf( stdout, "   Freeing SSL session object \n" );
+            SSL_free( ssl );
+            if( idbg ) fprintf( stdout, "   Freeing SSL CTX \n" );
+            SSL_CTX_free( sslctx );
+         } else {  // iret == 1
+            if( iverb )
+               fprintf( stdout, " [%s]  Successfully enabled SSL/TLS\n", FUNC );
+            n = 999;    // for exiting the loop
+         }
+      }
+
+      ++n;
+   }
+
+
+// if( CONNECTED_SSL _OR_ CREATED_CONTEXT ??? ) {
+//    if( SSL_CTX_load_verify_locations( p->sslctx, p->ca_cert, p->ca_path ) ) {
+//       if( iverb )
+//          fprintf( stdout, " [%s]  Could not open CA file \n", FUNC );
+//    }
+// }
+
+   if( n == 999+1 ) {
+      // return data on success
+      if( iverb )
+         fprintf( stdout, " [%s]  Returning SSL objects \n", FUNC );
+      *socket = sd;
+      *method_ = method;
+      *sslctx_ = sslctx;
+      *ssl_ = ssl;
+      return 0;
+   }
+
+   return 4;
 }
 
 
@@ -706,8 +1025,8 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
    server_data.ca_path = NULL;
 
    ierr = inOSSL_InitializeSSL();
-   ierr = inOSSL_CreateServer( &server_data, "key.pem", "cert.pem" );
-   server_data.socket = inOSSL_StartServer( &server_data, iport );
+   ierr = inOSSL_CreateServerFromFiles( &server_data, "key.pem", "cert.pem" );
+   server_data.socket = inOSSL_StartServer( &server_data, iport, 10 );
    if( server_data.socket < 0 ) {
       printf(" [MAIN}  Failed to start server \n");
       (void) inOSSL_TerminateServer( &server_data );
@@ -799,7 +1118,7 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
       exit(1);
    }
 
-   while( iround < 3 ) {
+   while( iround < 1 ) {
       SSL *ssl = NULL;
       X509 *cert = NULL;
       int server;
@@ -812,7 +1131,7 @@ if( argc == 1 ) {    // make it a server when no arguments are provided
 #ifdef _DEBUG_OSSL_
    printf(" [MAIN]  Attempting connection \n");
 #endif
-      server = inOSSL_ConnectToServer( argv[1] , atoi( argv[2] ) );
+      server = inOSSL_ConnectToServer( argv[1] , atoi( argv[2] ), 0 );
       if( server < 0 ) {
 #ifdef _DEBUG_OSSL_
    printf(" [MAIN]  Connection failed! \n");
